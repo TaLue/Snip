@@ -14,6 +14,13 @@
 # Frontend vendor libraries
 wwwroot/lib/
 
+# Claude
+.claude/
+
+# Intermediate test scripts
+test.ps1
+test2.ps1
+
 # User-specific files
 *.rsuser
 *.suo
