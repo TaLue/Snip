@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Snip</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+
+    <nav class="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+        <a href="/" class="text-white font-bold text-xl tracking-tight">✂️ Snip</a>
+        <div class="flex items-center gap-4 text-sm">
+            @if (Context.Session.GetString("auth") == "1")
+            {
+                <a href="/dashboard" class="text-gray-400 hover:text-white transition">Dashboard</a>
+                <form action="/logout" method="post" class="inline">
+                    <button class="text-gray-500 hover:text-white transition">Logout</button>
+                </form>
+            }
+            else
+            {
+                <a href="/login" class="text-gray-400 hover:text-white transition">Login</a>
+            }
+        </div>
+    </nav>
+
+    <main class="flex-1 container mx-auto px-4 py-8 max-w-3xl">
+        @RenderBody()
+    </main>
+
+    <footer class="border-t border-gray-800 text-center text-gray-600 text-xs py-4">
+        Snip &mdash; URL Shortener
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

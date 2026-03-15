@@ -1,0 +1,55 @@
+@using System.Dynamic
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+    <a href="/" class="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition">+ New Link</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-gray-600 py-20">No links yet. <a href="/" class="text-indigo-400 hover:underline">Create one</a>.</div>
+}
+else
+{
+    <div class="space-y-3">
+        @foreach (var link in Model)
+        {
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-center gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-mono text-indigo-400 text-sm">/@link.Slug</span>
+                        @if (!link.IsActive)
+                        {
+                            <span class="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded">inactive</span>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty((string?)link.Label))
+                    {
+                        <div class="text-sm text-white mb-0.5">@link.Label</div>
+                    }
+                    <div class="text-xs text-gray-600 truncate">@link.OriginalUrl</div>
+                </div>
+
+                <div class="text-center shrink-0">
+                    <div class="text-2xl font-bold text-white">@link.TotalClicks</div>
+                    <div class="text-xs text-gray-600">clicks</div>
+                </div>
+
+                <div class="flex gap-2 shrink-0">
+                    <a href="/dashboard/@link.Id" class="text-xs text-gray-400 hover:text-white px-3 py-1.5 border border-gray-700 rounded hover:border-gray-500 transition">
+                        Stats
+                    </a>
+                    <form action="/dashboard/@link.Id/toggle" method="post">
+                        <button class="text-xs text-gray-400 hover:text-white px-3 py-1.5 border border-gray-700 rounded hover:border-gray-500 transition">
+                            @(link.IsActive ? "Disable" : "Enable")
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}

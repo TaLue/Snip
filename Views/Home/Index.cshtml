@@ -1,0 +1,58 @@
+@{
+    ViewData["Title"] = "Snip";
+    var createdUrl = TempData["CreatedUrl"] as string;
+    var createdSlug = TempData["CreatedSlug"] as string;
+}
+
+<div class="mt-16 text-center">
+    <h1 class="text-4xl font-bold mb-2">Shorten your URL</h1>
+    <p class="text-gray-500 mb-10">Paste a long link, get a short one.</p>
+
+    @if (!string.IsNullOrEmpty(createdUrl))
+    {
+        <div class="bg-green-900/30 border border-green-700 rounded-lg p-4 mb-8 flex items-center justify-between gap-4">
+            <span class="text-green-400 font-mono text-sm truncate">@createdUrl</span>
+            <button onclick="navigator.clipboard.writeText('@createdUrl'); this.textContent='Copied!'"
+                    class="text-xs bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded shrink-0 transition">
+                Copy
+            </button>
+        </div>
+    }
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="bg-red-900/30 border border-red-700 rounded-lg p-3 mb-6 text-red-400 text-sm">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div>@error.ErrorMessage</div>
+            }
+        </div>
+    }
+
+    <form action="/Home/Create" method="post" class="space-y-4 text-left">
+        <div>
+            <label class="block text-sm text-gray-400 mb-1">URL *</label>
+            <input type="url" name="originalUrl" placeholder="https://example.com/very/long/url"
+                   required
+                   class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition" />
+        </div>
+
+        <div class="flex gap-4">
+            <div class="flex-1">
+                <label class="block text-sm text-gray-400 mb-1">Label <span class="text-gray-600">(optional)</span></label>
+                <input type="text" name="label" placeholder="e.g. My Portfolio"
+                       class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition" />
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm text-gray-400 mb-1">Custom slug <span class="text-gray-600">(optional)</span></label>
+                <input type="text" name="customSlug" placeholder="e.g. my-link"
+                       class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition" />
+            </div>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition">
+            Shorten
+        </button>
+    </form>
+</div>
