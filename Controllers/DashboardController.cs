@@ -1,28 +1,27 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Snip.Data;
+using Snip.Filters;
+using Snip.Models.ViewModels;
 
 namespace Snip.Controllers;
 
+[TypeFilter(typeof(RequireAuthFilter))]
 public class DashboardController(SnipDbContext db) : Controller
 {
-    private bool IsAuthed => HttpContext.Session.GetString("auth") == "1";
-
     [HttpGet("/dashboard")]
     public async Task<IActionResult> Index()
     {
-        if (!IsAuthed) return RedirectToAction("Login", "Home");
-
         var links = await db.ShortLinks
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new
+            .Select(s => new LinkSummaryDto
             {
-                s.Id,
-                s.Slug,
-                s.OriginalUrl,
-                s.Label,
-                s.CreatedAt,
-                s.IsActive,
+                Id = s.Id,
+                Slug = s.Slug,
+                OriginalUrl = s.OriginalUrl,
+                Label = s.Label,
+                CreatedAt = s.CreatedAt,
+                IsActive = s.IsActive,
                 TotalClicks = s.Clicks.Count
             })
             .ToListAsync();
@@ -33,21 +32,46 @@ public class DashboardController(SnipDbContext db) : Controller
     [HttpGet("/dashboard/{id:int}")]
     public async Task<IActionResult> Detail(int id)
     {
-        if (!IsAuthed) return RedirectToAction("Login", "Home");
-
         var link = await db.ShortLinks
-            .Include(s => s.Clicks)
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (link is null) return NotFound();
-        return View(link);
+
+        var clicks = await db.ClickLogs
+            .Where(c => c.ShortLinkId == id)
+            .Select(c => new { c.ClickedAt, c.Referrer })
+            .ToListAsync();
+
+        var vm = new LinkDetailDto
+        {
+            Id = link.Id,
+            Slug = link.Slug,
+            OriginalUrl = link.OriginalUrl,
+            Label = link.Label,
+            CreatedAt = link.CreatedAt,
+            IsActive = link.IsActive,
+            TotalClicks = clicks.Count,
+            ClicksByDay = clicks
+                .GroupBy(c => c.ClickedAt.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new ClicksByDayDto(g.Key.ToString("MMM d"), g.Count()))
+                .ToList(),
+            TopReferrers = clicks
+                .GroupBy(c => string.IsNullOrEmpty(c.Referrer) ? "Direct" : c.Referrer)
+                .OrderByDescending(g => g.Count())
+                .Take(5)
+                .Select(g => new ReferrerDto(g.Key, g.Count()))
+                .ToList()
+        };
+
+        return View(vm);
     }
 
     [HttpPost("/dashboard/{id:int}/toggle")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Toggle(int id)
     {
-        if (!IsAuthed) return Unauthorized();
-
         var link = await db.ShortLinks.FindAsync(id);
         if (link is null) return NotFound();
 

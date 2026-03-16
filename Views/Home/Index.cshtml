@@ -1,7 +1,6 @@
-@{
+﻿@{
     ViewData["Title"] = "Snip";
     var createdUrl = TempData["CreatedUrl"] as string;
-    var createdSlug = TempData["CreatedSlug"] as string;
 }
 
 <div class="mt-16 text-center">
@@ -30,6 +29,7 @@
     }
 
     <form action="/Home/Create" method="post" class="space-y-4 text-left">
+        @Html.AntiForgeryToken()
         <div>
             <label class="block text-sm text-gray-400 mb-1">URL *</label>
             <input type="url" name="originalUrl" placeholder="https://example.com/very/long/url"

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -15,6 +15,7 @@
             {
                 <a href="/dashboard" class="text-gray-400 hover:text-white transition">Dashboard</a>
                 <form action="/logout" method="post" class="inline">
+                    @Html.AntiForgeryToken()
                     <button class="text-gray-500 hover:text-white transition">Logout</button>
                 </form>
             }

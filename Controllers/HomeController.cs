@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Snip.Data;
@@ -7,21 +8,32 @@ namespace Snip.Controllers;
 
 public class HomeController(SnipDbContext db, IConfiguration config) : Controller
 {
+    private static readonly Regex SlugRegex = new(@"^[a-z0-9\-_]{1,30}$", RegexOptions.Compiled);
+
     [HttpGet]
     public IActionResult Index() => View();
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(string originalUrl, string? label, string? customSlug)
     {
-        if (string.IsNullOrWhiteSpace(originalUrl))
+        if (string.IsNullOrWhiteSpace(originalUrl) ||
+            !Uri.TryCreate(originalUrl.Trim(), UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            ModelState.AddModelError("", "URL is required");
+            ModelState.AddModelError("", "Please enter a valid URL (http/https)");
             return View("Index");
         }
 
         var slug = string.IsNullOrWhiteSpace(customSlug)
             ? GenerateSlug()
             : customSlug.Trim().ToLower();
+
+        if (!SlugRegex.IsMatch(slug))
+        {
+            ModelState.AddModelError("", "Slug can only contain lowercase letters, numbers, dashes and underscores (max 30 chars)");
+            return View("Index");
+        }
 
         if (await db.ShortLinks.AnyAsync(s => s.Slug == slug))
         {
@@ -48,6 +60,7 @@ public class HomeController(SnipDbContext db, IConfiguration config) : Controlle
     public IActionResult Login() => View();
 
     [HttpPost("/login")]
+    [ValidateAntiForgeryToken]
     public IActionResult Login(string password)
     {
         var adminPassword = config["Snip:AdminPassword"];
@@ -56,11 +69,12 @@ public class HomeController(SnipDbContext db, IConfiguration config) : Controlle
             HttpContext.Session.SetString("auth", "1");
             return RedirectToAction("Index", "Dashboard");
         }
-        ViewBag.Error = "Wrong password";
+        ModelState.AddModelError("", "Wrong password");
         return View();
     }
 
     [HttpPost("/logout")]
+    [ValidateAntiForgeryToken]
     public IActionResult Logout()
     {
         HttpContext.Session.Clear();
@@ -84,14 +98,15 @@ public class HomeController(SnipDbContext db, IConfiguration config) : Controlle
         db.ClickLogs.Add(click);
         await db.SaveChangesAsync();
 
-        return base.Redirect(link.OriginalUrl);
+        return Redirect(link.OriginalUrl);
     }
 
     private static string GenerateSlug()
     {
         const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-        return new string(Enumerable.Range(0, 6)
-            .Select(_ => chars[Random.Shared.Next(chars.Length)])
-            .ToArray());
+        var result = new char[6];
+        for (var i = 0; i < result.Length; i++)
+            result[i] = chars[Random.Shared.Next(chars.Length)];
+        return new string(result);
     }
 }

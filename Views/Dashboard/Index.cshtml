@@ -1,5 +1,4 @@
-@using System.Dynamic
-@model IEnumerable<dynamic>
+@model IEnumerable<LinkSummaryDto>
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -27,7 +26,7 @@ else
                             <span class="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded">inactive</span>
                         }
                     </div>
-                    @if (!string.IsNullOrEmpty((string?)link.Label))
+                    @if (!string.IsNullOrEmpty(link.Label))
                     {
                         <div class="text-sm text-white mb-0.5">@link.Label</div>
                     }
@@ -44,6 +43,7 @@ else
                         Stats
                     </a>
                     <form action="/dashboard/@link.Id/toggle" method="post">
+                        @Html.AntiForgeryToken()
                         <button class="text-xs text-gray-400 hover:text-white px-3 py-1.5 border border-gray-700 rounded hover:border-gray-500 transition">
                             @(link.IsActive ? "Disable" : "Enable")
                         </button>
